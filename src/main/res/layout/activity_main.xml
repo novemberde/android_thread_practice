@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.example.kh.threadpractice.MainActivity"
+    android:orientation="vertical">
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:text="쓰레드 생성"
+        android:layout_weight="1"
+        android:id="@+id/bt_thread"
+        android:onClick="buttonClick"/>
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:text="파일 내용 출력"
+        android:layout_weight="1"
+        android:id="@+id/bt_print"
+        android:onClick="buttonClick"/>
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="9">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text=""
+            android:id="@+id/txt_content"/>
+    </ScrollView>
+</LinearLayout>
