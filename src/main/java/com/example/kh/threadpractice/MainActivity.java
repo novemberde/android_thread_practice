@@ -27,15 +27,17 @@ import java.util.Random;
 public class MainActivity extends AppCompatActivity {
     String TAG = this.getClass().getName();
     private TextView txt_content;
-    private Handler threadHandler,fileHandler;
-    private Thread thread;
-    private Random random;
+    private Handler toastMessageHandler;
+    private Thread randomIntThread;
     private String filePath;
+    private FileManager fileManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        fileManager = FileManager.INSTANCE;
         StringBuilder sb = new StringBuilder();
 
         sb.append(Environment.getExternalStorageDirectory());
@@ -49,23 +51,7 @@ public class MainActivity extends AppCompatActivity {
         filePath = sb.toString();
         txt_content = (TextView) findViewById(R.id.txt_content);
 
-        random = new Random();
-        threadHandler = new Handler(){
-            @Override
-            public void handleMessage(Message msg) {
-                int a = msg.getData().getInt(getResources().getString(R.string.random_int));
-                Toast.makeText(getApplicationContext(),
-                        Integer.toString(a),
-                        Toast.LENGTH_SHORT).show();
-            }
-        };
-
-        fileHandler = new Handler(){
-            @Override
-            public void handleMessage(Message msg) {
-                Toast.makeText(getApplicationContext(), "파일을 생성합니다.", Toast.LENGTH_SHORT).show();
-            }
-        };
+        toastMessageHandler = new ToastMessageHandler(getApplicationContext());
     }
 
     public void buttonClick(View view){
@@ -73,95 +59,21 @@ public class MainActivity extends AppCompatActivity {
             case R.id.bt_thread :
                 createRandomInt(); break;
             case R.id.bt_print :
-                printOriginalFile(); break;
+                printFile(); break;
             default: break;
         }
     }
 
     public void createRandomInt(){
-        thread = new Thread(){
-            @Override
-            public void run() {
-                Message msg = new Message();
-                Bundle bundle = new Bundle();
-                int intRandom = random.nextInt();
-                bundle.putInt(getResources().getString(R.string.random_int),intRandom);
-                msg.setData(bundle);
-                threadHandler.sendMessage(msg);
+        randomIntThread = new RandomIntThread(this, toastMessageHandler, filePath);
 
-                writeFile(Integer.toString(intRandom));
-            }
-        };
-
-        thread.start();
+        randomIntThread.start();
     }
 
-    public synchronized void printOriginalFile(){
-        BufferedReader bufferedReader = null;
-        File file = null;
-
-        try {
-            file = new File(filePath);
-            bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
-            txt_content.setText("");
-
-            while(true){
-                String data = bufferedReader.readLine();
-
-                if(data == null) break;
-
-                txt_content.append(data);
-                txt_content.append("\n");
-            }
-
-        } catch (FileNotFoundException e) {
-            //write the file if it isn't exist.
-            writeFile(null);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            //Close stream.
-            if(bufferedReader != null) try { bufferedReader.close(); } catch (IOException e) { e.printStackTrace(); }
-        }
+    public void printFile(){
+        txt_content.setText("");
+        String content = fileManager.readOriginalFile(filePath);
+        txt_content.setText(content);
     }
 
-    public synchronized void writeFile(String content){
-        BufferedReader bufferedReader = null;
-        BufferedWriter bufferedWriter = null;
-        StringBuilder stringBuilder = null;
-        File file = new File(filePath);
-        //Log.d(TAG, "file.getName(): " + file.getName());
-
-        try {
-            stringBuilder = new StringBuilder(content);
-            stringBuilder.append("\n");
-
-            if( file.exists() ){
-                bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(file),"UTF-8"));
-
-                while(true){
-                    String data = bufferedReader.readLine();
-
-                    if(data == null) break;
-
-                    stringBuilder.append(data);
-                    stringBuilder.append("\n");
-                }
-            }
-            bufferedWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
-
-            bufferedWriter.write(stringBuilder.toString());
-            bufferedWriter.flush();
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            //Close stream.
-            if(bufferedReader != null){  try { bufferedReader.close();  } catch (IOException e) { e.printStackTrace(); } }
-            if(bufferedWriter != null){  try { bufferedWriter.close();  } catch (IOException e) { e.printStackTrace(); } }
-        }
-    }
 }
